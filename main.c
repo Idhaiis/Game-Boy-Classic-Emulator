@@ -7,16 +7,11 @@ int main() {
 
     CPU cpu;
     
-    load_rom("gb-test-roms-master/Games/Tetris.gb");
+    load_rom("gb-test-roms-master/cpu_instrs/individual/01-special.gb");
 
     cpu_init(&cpu);
     
-    for (int i = 0; i<10; i++) {
-        cpu_step(&cpu);
-    }
-    
-    for (uint16_t i = 0x0000; i < 0x7FFF; i++) {
-        printf("%X ", read_byte(i));
+    while (cpu_step(&cpu) == 0) {
     }
 
     return 0;

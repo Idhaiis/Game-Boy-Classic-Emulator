@@ -41,6 +41,6 @@ typedef struct {
 } CPU;
 
 void cpu_init(CPU *cpu);
-void cpu_step(CPU *cpu);
+bool cpu_step(CPU *cpu);
 
 #endif
