@@ -1,8 +1,7 @@
-#include <stdbool.h>
-#include <stdint.h>
-
 #ifndef MEMORY_H
 #define MEMORY_H
+
+#include <stdint.h>
 
 extern uint8_t memory[65536];
 
