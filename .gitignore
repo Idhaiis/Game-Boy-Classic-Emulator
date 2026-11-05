@@ -6,4 +6,4 @@ build/
 *.out
 *.o
 *.obj
-gb-test-roms-master/
+cmake-build-debug/gb-test-roms-master/

@@ -3,9 +3,8 @@
 
 uint8_t memory[65536] = {0};
 
-bool load_rom(char rom_directory[]) {    
-    FILE *rom;
-    rom = fopen(rom_directory, "rb");
+bool load_rom(char rom_directory[]) {
+    FILE *rom = fopen(rom_directory, "rb");
     if (rom == NULL) {
         perror("Error opening rom.");
         return false;
@@ -31,6 +30,4 @@ void write_byte(uint16_t address, uint8_t value) {
         fflush(stdout); 
         memory[0xFF02] = 0;
     }
-
-    return;
 }
