@@ -1,4 +1,9 @@
-emu.exe
-a.exe
-gb-test-roms-master/
+.idea/
+cmake-build-*/
+build/
 .vscode/
+*.exe
+*.out
+*.o
+*.obj
+gb-test-roms-master/

@@ -14,6 +14,7 @@ void cpu_init(CPU *cpu) {
 bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in cpu.h when im done working on cpu commands.
     uint8_t low, high;
     uint16_t target;
+    bool is_zero;
 
     uint8_t opcode = read_byte(cpu->PC++);
     printf("Current CPU: | AF: 0x%04X | BC: 0x%04X | DE: 0x%04X | HL: 0x%04X | SP: 0x%04X | PC: 0x%04X | opcode: 0x%02X\n", cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC-1, opcode);
@@ -61,10 +62,10 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             }
             break;
         case 0x20:  //JR NZ, i8
-            int8_t target = (int8_t)read_byte(cpu->PC++);
-            bool is_zero = (cpu->F & 0x80) != 0;
+            int8_t offset = (int8_t)read_byte(cpu->PC++);
+            is_zero = (cpu->F & 0x80) != 0;
             if (!is_zero) {
-                cpu->PC += target;
+                cpu->PC += offset;
             }
             break;
         case 0x14:  //INC D
@@ -90,6 +91,25 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             break;
         case 0xF3:  //DI (Disable Interrupts)
             cpu->IME = false;
+            break;
+        case 0x31:  //LD SP, u16
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            cpu->SP = target;
+            break;
+        case 0xEA: //LD (U16), A
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            write_byte(target, cpu->A);
+            break;
+        case 0x3E:  //LD A, u8
+            cpu->A = read_byte(cpu->PC++);
+            break;
+        case 0xE0:  //LD (0xFF00 + u8), A
+            target = 0xFF00 + read_byte(cpu->PC++);
+            write_byte(target, cpu->A);
             break;
         default:
             printf("Command doesn't exist. Opcode: 0x%02X\n", opcode);
