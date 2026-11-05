@@ -9,27 +9,50 @@ void cpu_init(CPU *cpu) {
     cpu->DE = 0x0000;
     cpu->HL = 0x0000;
     cpu->IME = false;
+    cpu->halt = false;
 }
 
-bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in cpu.h when im done working on cpu commands.
+bool cpu_step(CPU *cpu) {
+    if (cpu->halt == true) {
+        return 0;
+    }
     int8_t offset;
     uint8_t low, high, val;
     uint8_t z_flag, n_flag, h_flag, c_flag;
     uint8_t old_z, old_n, old_h, old_c;
     uint16_t target, return_address;
-    bool is_zero;
+    bool is_zero, carry;
 
     uint8_t opcode = read_byte(cpu->PC++);
     //printf("Current CPU: | AF: 0x%04X | BC: 0x%04X | DE: 0x%04X | HL: 0x%04X | SP: 0x%04X | PC: 0x%04X | opcode: 0x%02X\n", cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC-1, opcode);
 
     switch (opcode) {
         // ==========================================
-        // 1. SYSTEM & CONTROL INSTRUCTIONS
+        // 1. SYSTEM & CONTROL INSTRUCTIONS DONE (Don't forget to add Delay Phenomenon bug to EI)
         // ==========================================
         case 0x00:  //NOP
             break;
+        case 0x10:  //STOP
+            printf("CPU stopped with 0x10 command.");
+            return 1;
+            break;
+        case 0x76:  //HALT
+            cpu->halt = true;
+            break;
         case 0xF3:  //DI (Disable Interrupts)
             cpu->IME = false;
+            break;
+        case 0xFB:  //EI (Enable Interrupts)
+            cpu->IME = true;
+            break;
+        case 0xCB:  //PREFIX CB
+            uint8_t cb_opcode = read_byte(cpu->PC++);
+            switch (cb_opcode) {
+                default:
+                    printf("Command doesn't exist on 0xCB prefixed. Opcode: 0x%02X\n", cb_opcode);
+                    return 1;
+                    break;
+            }
             break;
 
         // ==========================================
@@ -94,9 +117,9 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             write_byte(target, cpu->A);
             break;
 
-        // ==========================================   DONE
-        // 3. ARITHMETIC (INC / DEC) INSTRUCTIONS       DONE
-        // ==========================================   DONE
+        // ==========================================
+        // 3. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS DONE
+        // ==========================================
         case 0x03:  //INC BC
             cpu->BC++;
             break;
@@ -269,12 +292,8 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             break;
 
         // ==========================================
-        // 5. JUMPS & CALLS (JR / JP / CALL / RET)
+        // 5. JUMPS & CALLS (JR DONE / JP / CALL / RET)
         // ==========================================
-        case 0x18:  //JR i8
-            offset = (int8_t)read_byte(cpu->PC++);
-            cpu->PC += offset;
-            break;
         case 0x20:  //JR NZ, i8
             offset = (int8_t)read_byte(cpu->PC++);
             is_zero = (cpu->F & 0x80) != 0;
@@ -282,6 +301,32 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
                 cpu->PC += offset;
             }
             break;
+        case 0x30:  //JR NC, i8
+            offset = (int8_t)read_byte(cpu->PC++);
+            carry = (cpu->F & 0x10) != 0;
+            if (!carry) {
+                cpu->PC += offset;
+            }
+            break;
+        case 0x18:  //JR i8
+            offset = (int8_t)read_byte(cpu->PC++);
+            cpu->PC += offset;
+            break;
+        case 0x28:  //JR Z, i8
+            offset = (int8_t)read_byte(cpu->PC++);
+            is_zero = (cpu->F & 0x80) != 0;
+            if (is_zero) {
+                cpu->PC += offset;
+            }
+            break;
+        case 0x38:  //JR C, i8
+            offset = (int8_t)read_byte(cpu->PC++);
+            carry = (cpu->F & 0x10) != 0;
+            if (carry) {
+                cpu->PC += offset;
+            }
+            break;
+
         case 0xC3:  //JP u16
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);

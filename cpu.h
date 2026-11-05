@@ -40,6 +40,7 @@ typedef struct {
     uint16_t SP;
     uint16_t PC;
     bool IME;   //Interrupt Master Enable
+    bool halt;
 } CPU;
 
 void cpu_init(CPU *cpu);
