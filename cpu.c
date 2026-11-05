@@ -52,9 +52,19 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             break;
         case 0x1C:  //INC E
             cpu->E++;
+            if (cpu->E == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            else {                  //else make zero flag = 0
+                cpu->F &= 0x70;
+            }
             break;
         case 0x20:  //JR NZ, i8
-            //Gonna continue tomorrow.
+            int8_t target = (int8_t)read_byte(cpu->PC++);
+            bool is_zero = (cpu->F & 0x80) != 0;
+            if (!is_zero) {
+                cpu->PC += target;
+            }
             break;
         default:
             printf("Command doesn't exist. Opcode: 0x%02X\n", opcode);
