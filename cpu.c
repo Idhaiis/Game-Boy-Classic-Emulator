@@ -94,9 +94,9 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             write_byte(target, cpu->A);
             break;
 
-        // ==========================================
-        // 3. ARITHMETIC (INC / DEC) INSTRUCTIONS
-        // ==========================================
+        // ==========================================   DONE
+        // 3. ARITHMETIC (INC / DEC) INSTRUCTIONS       DONE
+        // ==========================================   DONE
         case 0x03:  //INC BC
             cpu->BC++;
             break;
