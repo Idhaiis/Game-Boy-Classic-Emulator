@@ -24,5 +24,13 @@ uint8_t read_byte(uint16_t address) {
 
 void write_byte(uint16_t address, uint8_t value) {
     memory[address] = value;
+
+    if (address == 0xFF02 && value == 0x81) {   //It's for Blargg's test roms.
+        char c = memory[0xFF01];
+        printf("%c", c);
+        fflush(stdout); 
+        memory[0xFF02] = 0;
+    }
+
     return;
 }
