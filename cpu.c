@@ -8,6 +8,7 @@ void cpu_init(CPU *cpu) {
     cpu->BC = 0x0000;
     cpu->DE = 0x0000;
     cpu->HL = 0x0000;
+    cpu->IME = false;
 }
 
 bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in cpu.h when im done working on cpu commands.
@@ -65,6 +66,30 @@ bool cpu_step(CPU *cpu) {       //I'm going to change bool to void there and in 
             if (!is_zero) {
                 cpu->PC += target;
             }
+            break;
+        case 0x14:  //INC D
+            cpu->D++;
+            if (cpu->D == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            else {                  //else make zero flag = 0
+                cpu->F &= 0x70;
+            }
+            break;
+        case 0x0D:  //DEC C
+            cpu->C--;
+            if (cpu->C == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            else {                  //else make zero flag = 0
+                cpu->F &= 0x70;
+            }
+            break;
+        case 0x78:  //LD A, B
+            cpu->A = cpu->B;
+            break;
+        case 0xF3:  //DI (Disable Interrupts)
+            cpu->IME = false;
             break;
         default:
             printf("Command doesn't exist. Opcode: 0x%02X\n", opcode);
