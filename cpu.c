@@ -28,7 +28,7 @@ bool cpu_step(CPU *cpu) {
 
     switch (opcode) {
         // ==========================================
-        // 1. SYSTEM & CONTROL INSTRUCTIONS DONE (Don't forget to add Delay Phenomenon bug to EI)
+        // 1. SYSTEM & CONTROL INSTRUCTIONS ALL DONE (Don't forget to add Delay Phenomenon bug to EI)
         // ==========================================
         case 0x00:  //NOP
             break;
@@ -118,7 +118,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 3. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS DONE
+        // 3. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS ALL DONE
         // ==========================================
         case 0x03:  //INC BC
             cpu->BC++;
@@ -292,7 +292,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 5. JUMPS & CALLS (JR DONE / JP / CALL / RET)
+        // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE) ALL DONE
         // ==========================================
         case 0x20:  //JR NZ, i8
             offset = (int8_t)read_byte(cpu->PC++);
@@ -327,19 +327,109 @@ bool cpu_step(CPU *cpu) {
             }
             break;
 
+        case 0xC2:  //JP NZ, u16
+            is_zero = (cpu->F & 0x80) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (!is_zero) {
+                cpu->PC = target;
+            }
+            break;
+        case 0xD2:  //JP NC, u16
+            carry = (cpu->F & 0x10) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (!carry) {
+                cpu->PC = target;
+            }
+            break;
         case 0xC3:  //JP u16
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);
             target = (high << 8) | low;
             cpu->PC = target;
             break;
-        case 0xC9:  //RET
-            low = read_byte(cpu->SP++);
-            high = read_byte(cpu->SP++);
+        case 0xCA:  //JP Z, u16
+            is_zero = (cpu->F & 0x80) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
             target = (high << 8) | low;
-            cpu->PC = target;
+            if (is_zero) {
+                cpu->PC = target;
+            }
             break;
-        case 0xCD:  //CALL (U16)
+        case 0xDA:  //JP C, u16
+            carry = (cpu->F & 0x10) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (carry) {
+                cpu->PC = target;
+            }
+            break;
+        case 0xE9:  //JP (HL)
+            cpu->PC = (cpu->H << 8) | cpu->L;
+            break;
+
+        case 0xC4:  //CALL NZ, u16
+            is_zero = (cpu->F & 0x80) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (!is_zero) {
+                return_address = cpu->PC;
+                cpu->SP--;
+                write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+                cpu->SP--;
+                write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+                cpu->PC = target;
+            }
+            break;
+        case 0xD4:  //CALL NC, u16
+            carry = (cpu->F & 0x10) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (!carry) {
+                return_address = cpu->PC;
+                cpu->SP--;
+                write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+                cpu->SP--;
+                write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+                cpu->PC = target;
+            }
+            break;
+        case 0xCC:  //CALL Z, u16
+            is_zero = (cpu->F & 0x80) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (is_zero) {
+                return_address = cpu->PC;
+                cpu->SP--;
+                write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+                cpu->SP--;
+                write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+                cpu->PC = target;
+            }
+            break;
+        case 0xDC:  //CALL C, u16
+            carry = (cpu->F & 0x10) != 0;
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            if (carry) {
+                return_address = cpu->PC;
+                cpu->SP--;
+                write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+                cpu->SP--;
+                write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+                cpu->PC = target;
+            }
+            break;
+        case 0xCD:  //CALL u16
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);
             target = (high << 8) | low;
@@ -349,6 +439,56 @@ bool cpu_step(CPU *cpu) {
             cpu->SP--;
             write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
             cpu->PC = target;
+            break;
+
+        case 0xC0:  //RET NZ
+            is_zero = (cpu->F & 0x80) != 0;
+            if (!is_zero) {
+                low = read_byte(cpu->SP++);
+                high = read_byte(cpu->SP++);
+                target = (high << 8) | low;
+            }
+            cpu->PC = target;
+            break;
+        case 0xD0:  //RET NC
+            carry = (cpu->F & 0x10) != 0;
+            if (!carry) {
+                low = read_byte(cpu->SP++);
+                high = read_byte(cpu->SP++);
+                target = (high << 8) | low;
+            }
+            cpu->PC = target;
+            break;
+        case 0xC8:  //RET Z
+            is_zero = (cpu->F & 0x80) != 0;
+            if (is_zero) {
+                low = read_byte(cpu->SP++);
+                high = read_byte(cpu->SP++);
+                target = (high << 8) | low;
+            }
+            cpu->PC = target;
+            break;
+        case 0xD8:  //RET C
+            carry = (cpu->F & 0x10) != 0;
+            if (carry) {
+                low = read_byte(cpu->SP++);
+                high = read_byte(cpu->SP++);
+                target = (high << 8) | low;
+            }
+            cpu->PC = target;
+            break;
+        case 0xC9:  //RET
+            low = read_byte(cpu->SP++);
+            high = read_byte(cpu->SP++);
+            target = (high << 8) | low;
+            cpu->PC = target;
+            break;
+        case 0xD9:  //RETI
+            low = read_byte(cpu->SP++);
+            high = read_byte(cpu->SP++);
+            target = (high << 8) | low;
+            cpu->PC = target;
+            cpu->IME = true;
             break;
 
         // ==========================================
