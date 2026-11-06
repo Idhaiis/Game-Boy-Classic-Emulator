@@ -20,7 +20,7 @@ bool cpu_step(CPU *cpu) {
     uint8_t low, high, val;
     uint8_t z_flag, n_flag, h_flag, c_flag;
     uint8_t old_z, old_n, old_h, old_c;
-    uint16_t target, return_address;
+    uint16_t result ,target, return_address;
     bool is_zero, carry;
     uint8_t cb_opcode;
 
@@ -523,8 +523,70 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 4. LOGICAL OPERATIONS (OR / AND / XOR)
+        // 4. ARITHMETICAL & LOGICAL OPERATIONS
         // ==========================================
+
+        case 0x80:  //ADD A, B
+            result = cpu->A + cpu->B;
+            h_flag = ((cpu->A & 0x0F) + (cpu->B & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->B;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x90:  //SUB A, B
+            val = cpu->A;
+            cpu->A -= cpu->B;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->B & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->B) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA0:  //AND A, B
+            cpu->A &= cpu->B;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB0:  //OR A, B
+            cpu->A |= cpu->B;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x81:  //ADD A, C
+            result = cpu->A + cpu->C;
+            h_flag = ((cpu->A & 0x0F) + (cpu->C & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->C;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x91:  //SUB A, C
+            val = cpu->A;
+            cpu->A -= cpu->C;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->C & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->C) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA1:  //AND A, C
+            cpu->A &= cpu->C;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
         case 0xB1:  //OR A, C
             cpu->A |= cpu->C;
             cpu->F = 0x00;          //reset all flags
@@ -532,6 +594,284 @@ bool cpu_step(CPU *cpu) {
                 cpu->F |= 0x80;
             }
             break;
+        case 0x82:  //ADD A, D
+            result = cpu->A + cpu->D;
+            h_flag = ((cpu->A & 0x0F) + (cpu->D & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->D;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x92:  //SUB A, D
+            val = cpu->A;
+            cpu->A -= cpu->D;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->D & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->D) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA2:  //AND A, D
+            cpu->A &= cpu->D;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB2:  //OR A, D
+            cpu->A |= cpu->D;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x83:  //ADD A, E
+            result = cpu->A + cpu->E;
+            h_flag = ((cpu->A & 0x0F) + (cpu->E & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->E;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x93:  //SUB A, E
+            val = cpu->A;
+            cpu->A -= cpu->E;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->E & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->E) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA3:  //AND A, E
+            cpu->A &= cpu->E;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB3:  //OR A, E
+            cpu->A |= cpu->E;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x84:  //ADD A, H
+            result = cpu->A + cpu->H;
+            h_flag = ((cpu->A & 0x0F) + (cpu->H & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->H;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x94:  //SUB A, H
+            val = cpu->A;
+            cpu->A -= cpu->H;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->H & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->H) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA4:  //AND A, H
+            cpu->A &= cpu->H;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB4:  //OR A, H
+            cpu->A |= cpu->H;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x85:  //ADD A, L
+            result = cpu->A + cpu->L;
+            h_flag = ((cpu->A & 0x0F) + (cpu->L & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->L;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x95:  //SUB A, L
+            val = cpu->A;
+            cpu->A -= cpu->L;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->L & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->L) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA5:  //AND A, L
+            cpu->A &= cpu->L;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB5:  //OR A, L
+            cpu->A |= cpu->L;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x86:  //ADD A, (HL)
+            result = cpu->A + read_byte(cpu->HL);
+            h_flag = ((cpu->A & 0x0F) + (read_byte(cpu->HL) & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += read_byte(cpu->HL);
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x96:  //SUB A, (HL)
+            val = cpu->A;
+            cpu->A -= read_byte(cpu->HL);
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (read_byte(cpu->HL) & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < read_byte(cpu->HL)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA6:  //AND A, (HL)
+            cpu->A &= read_byte(cpu->HL);
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB6:  //OR A, (HL)
+            cpu->A |= read_byte(cpu->HL);
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xC6:  //ADD A, u8
+            target = read_byte(cpu->PC++);
+            result = cpu->A + target;
+            h_flag = ((cpu->A & 0x0F) + (target & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += target;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xD6:  //SUB A, u8
+            target = read_byte(cpu->PC++);
+            val = cpu->A;
+            cpu->A -= target;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (target & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < target) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xE6:  //AND A, u8
+            target = read_byte(cpu->PC++);
+            cpu->A &= target;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xF6:  //OR A, u8
+            target = read_byte(cpu->PC++);
+            cpu->A |= target;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0x87:  //ADD A, A
+            result = cpu->A + cpu->A;
+            h_flag = ((cpu->A & 0x0F) + (cpu->A & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A += cpu->A;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x97:  //SUB A, A
+            val = cpu->A;
+            cpu->A -= cpu->A;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            h_flag = ((val & 0x0F) < (cpu->A & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (val < cpu->A) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xA7:  //AND A, A
+            cpu->A &= cpu->A;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            h_flag = 0x20;
+            cpu->F |= h_flag;
+            break;
+        case 0xB7:  //OR A, A
+            cpu->A |= cpu->A;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+
+        case 0x88:  //ADC A, B
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->B + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->B & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x98:  //SBC A, B
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->B - old_c;
+            z_flag = (result == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->B & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t) cpu->A < (uint16_t) (cpu->B + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xA8:  //XOR A, B
+            cpu->A ^= cpu->B;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xB8:  //CP A, B
+            z_flag = (cpu->A == cpu->B) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->B & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->B) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+
 
         // ==========================================
         // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE) ALL DONE
@@ -689,8 +1029,8 @@ bool cpu_step(CPU *cpu) {
                 low = read_byte(cpu->SP++);
                 high = read_byte(cpu->SP++);
                 target = (high << 8) | low;
+                cpu->PC = target;
             }
-            cpu->PC = target;
             break;
         case 0xD0:  //RET NC
             carry = (cpu->F & 0x10) != 0;
@@ -698,8 +1038,8 @@ bool cpu_step(CPU *cpu) {
                 low = read_byte(cpu->SP++);
                 high = read_byte(cpu->SP++);
                 target = (high << 8) | low;
+                cpu->PC = target;
             }
-            cpu->PC = target;
             break;
         case 0xC8:  //RET Z
             is_zero = (cpu->F & 0x80) != 0;
@@ -707,8 +1047,8 @@ bool cpu_step(CPU *cpu) {
                 low = read_byte(cpu->SP++);
                 high = read_byte(cpu->SP++);
                 target = (high << 8) | low;
+                cpu->PC = target;
             }
-            cpu->PC = target;
             break;
         case 0xD8:  //RET C
             carry = (cpu->F & 0x10) != 0;
@@ -716,8 +1056,8 @@ bool cpu_step(CPU *cpu) {
                 low = read_byte(cpu->SP++);
                 high = read_byte(cpu->SP++);
                 target = (high << 8) | low;
+                cpu->PC = target;
             }
-            cpu->PC = target;
             break;
         case 0xC9:  //RET
             low = read_byte(cpu->SP++);
@@ -734,11 +1074,11 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 6. STACK OPERATIONS (PUSH / POP)
+        // 6. STACK OPERATIONS (PUSH DONE / POP DONE) ALL DONE
         // ==========================================
         case 0xC1:  //POP BC
-            cpu->L = read_byte(cpu->SP++);
-            cpu->H = read_byte(cpu->SP++);
+            cpu->C = read_byte(cpu->SP++);
+            cpu->B = read_byte(cpu->SP++);
             break;
         case 0xD1:  //POP DE
             cpu->E = read_byte(cpu->SP++);

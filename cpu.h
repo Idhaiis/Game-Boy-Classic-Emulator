@@ -8,8 +8,8 @@
 typedef struct {    
     union {
         struct {
-            uint8_t F;  //High byte
-            uint8_t A;  //Low byte
+            uint8_t F;  //Low byte
+            uint8_t A;  //High byte
         };
         uint16_t AF;
     };
