@@ -22,6 +22,7 @@ bool cpu_step(CPU *cpu) {
     uint8_t old_z, old_n, old_h, old_c;
     uint16_t target, return_address;
     bool is_zero, carry;
+    uint8_t cb_opcode;
 
     uint8_t opcode = read_byte(cpu->PC++);
     //printf("Current CPU: | AF: 0x%04X | BC: 0x%04X | DE: 0x%04X | HL: 0x%04X | SP: 0x%04X | PC: 0x%04X | opcode: 0x%02X\n", cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC-1, opcode);
@@ -46,7 +47,7 @@ bool cpu_step(CPU *cpu) {
             cpu->IME = true;
             break;
         case 0xCB:  //PREFIX CB
-            uint8_t cb_opcode = read_byte(cpu->PC++);
+            cb_opcode = read_byte(cpu->PC++);
             switch (cb_opcode) {
                 default:
                     printf("Command doesn't exist on 0xCB prefixed. Opcode: 0x%02X\n", cb_opcode);
@@ -56,7 +57,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 2. LOAD / DATA TRANSFER (LD) INSTRUCTIONS
+        // 2. LOAD / DATA TRANSFER (LD) INSTRUCTIONS ALL DONE
         // ==========================================
         case 0x01:  //LD BC, u16
             low = read_byte(cpu->PC++);
@@ -64,17 +65,11 @@ bool cpu_step(CPU *cpu) {
             target = (high << 8) | low;
             cpu->BC = target;
             break;
-        case 0x0E:  //LD C, u8
-            cpu->C = read_byte(cpu->PC++);
-            break;
         case 0x11:  //LD DE, u16
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);
             target = (high << 8) | low;
             cpu->DE = target;
-            break;
-        case 0x12:  //LD (DE), A
-            write_byte(cpu->DE, cpu->A);
             break;
         case 0x21:  //LD HL, u16
             low = read_byte(cpu->PC++);
@@ -82,39 +77,286 @@ bool cpu_step(CPU *cpu) {
             target = (high << 8) | low;
             cpu->HL = target;
             break;
-        case 0x2A:  //LD A, (HL+)
-            cpu->A = read_byte(cpu->HL++);
-            break;
         case 0x31:  //LD SP, u16
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);
             target = (high << 8) | low;
             cpu->SP = target;
             break;
+        case 0x02:  //LD (BC), A
+            write_byte(cpu->BC, cpu->A);
+            break;
+        case 0x12:  //LD (DE), A
+            write_byte(cpu->DE, cpu->A);
+            break;
+        case 0x22:  //LD (HL+), A
+            write_byte(cpu->HL++, cpu->A);
+            break;
+        case 0x32:  //LD (HL-), A
+            write_byte(cpu->HL--, cpu->A);
+            break;
+        case 0x06:  //LD B, u8
+            cpu->B = read_byte(cpu->PC++);
+            break;
+        case 0x16:  //LD D, u8
+            cpu->D = read_byte(cpu->PC++);
+            break;
+        case 0x26:  //LD H, u8
+            cpu->H = read_byte(cpu->PC++);
+            break;
+        case 0x36:  //LD (HL), u8
+            write_byte(cpu->HL, read_byte(cpu->PC++));
+            break;
+        case 0x08:  //LD (u16), SP
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            write_byte(target, cpu->SP & 0xFF);
+            write_byte(target + 1, (cpu->SP >> 8) & 0xFF);
+            break;
+        case 0x0A:  //LD A, (BC)
+            cpu->A = read_byte(cpu->BC);
+            break;
+        case 0x1A:  //LD A, (DE)
+            cpu->A = read_byte(cpu->DE);
+            break;
+        case 0x2A:  //LD A, (HL+)
+            cpu->A = read_byte(cpu->HL++);
+            break;
+        case 0x3A:  //LD A, (HL-)
+            cpu->A = read_byte(cpu->HL--);
+            break;
+        case 0x0E:  //LD C, u8
+            cpu->C = read_byte(cpu->PC++);
+            break;
+        case 0x1E:  //LD E, u8
+            cpu->E = read_byte(cpu->PC++);
+            break;
+        case 0x2E:  //LD L, u8
+            cpu->L = read_byte(cpu->PC++);
+            break;
         case 0x3E:  //LD A, u8
             cpu->A = read_byte(cpu->PC++);
+            break;
+        case 0x40:  //LD B, B
+            cpu->B = cpu->B;    //we have come from a while ago to the present
+            break;
+        case 0x50:  //LD D, B
+            cpu->D = cpu->B;
+            break;
+        case 0x60:  //LD H, B
+            cpu->H = cpu->B;
+            break;
+        case 0x70:  //LD (HL), B
+           write_byte(cpu->HL, cpu->B);
+            break;
+        case 0x41:  //LD B, C
+            cpu->B = cpu->C;
+            break;
+        case 0x51:  //LD D, C
+            cpu->D = cpu->C;
+            break;
+        case 0x61:  //LD H, C
+            cpu->H = cpu->C;
+            break;
+        case 0x71:  //LD (HL), C
+            write_byte(cpu->HL, cpu->C);
+            break;
+        case 0x42:  //LD B, D
+            cpu->B = cpu->D;
+            break;
+        case 0x52:  //LD D, D
+            cpu->D = cpu->D;
+            break;
+        case 0x62:  //LD H, D
+            cpu->H = cpu->D;
+            break;
+        case 0x72:  //LD (HL), D
+            write_byte(cpu->HL, cpu->D);
+            break;
+        case 0x43:  //LD B, E
+            cpu->B = cpu->E;
+            break;
+        case 0x53:  //LD D, E
+            cpu->D = cpu->E;
+            break;
+        case 0x63:  //LD H, E
+            cpu->H = cpu->E;
+            break;
+        case 0x73:  //LD (HL), E
+            write_byte(cpu->HL, cpu->E);
+            break;
+        case 0x44:  //LD B, H
+            cpu->B = cpu->H;
+            break;
+        case 0x54:  //LD D, H
+            cpu->D = cpu->H;
+            break;
+        case 0x64:  //LD H, H
+            cpu->H = cpu->H;
+            break;
+        case 0x74:  //LD (HL), H
+            write_byte(cpu->HL, cpu->H);
+            break;
+        case 0x45:  //LD B, L
+            cpu->B = cpu->L;
+            break;
+        case 0x55:  //LD D, L
+            cpu->D = cpu->L;
+            break;
+        case 0x65:  //LD H, L
+            cpu->H = cpu->L;
+            break;
+        case 0x75:  //LD (HL), L
+            write_byte(cpu->HL, cpu->L);
+            break;
+        case 0x46:  //LD B, (HL)
+            cpu->B = read_byte(cpu->HL);
+            break;
+        case 0x56:  //LD D, (HL)
+            cpu->D = read_byte(cpu->HL);
+            break;
+        case 0x66:  //LD H, (HL)
+            cpu->H = read_byte(cpu->HL);
             break;
         case 0x47:  //LD B, A
             cpu->B = cpu->A;
             break;
+        case 0x57:  //LD D, A
+            cpu->D = cpu->A;
+            break;
+        case 0x67:  //LD H, A
+            cpu->H = cpu->A;
+            break;
+        case 0x77:  //LD (HL), A
+            write_byte(cpu->HL, cpu->A);
+            break;
+        case 0x48:  //LD C, B
+            cpu->C = cpu->B;
+            break;
+        case 0x58:  //LD E, B
+            cpu->E = cpu->B;
+            break;
+        case 0x68:  //LD L, B
+            cpu->L = cpu->B;
+            break;
         case 0x78:  //LD A, B
             cpu->A = cpu->B;
+            break;
+        case 0x49:  //LD C, C
+            cpu->C = cpu->C;
+            break;
+        case 0x59:  //LD E, C
+            cpu->E = cpu->C;
+            break;
+        case 0x69:  //LD L, C
+            cpu->L = cpu->C;
+            break;
+        case 0x79:  //LD A, C
+            cpu->A = cpu->C;
+            break;
+        case 0x4A:  //LD C, D
+            cpu->C = cpu->D;
+            break;
+        case 0x5A:  //LD E, D
+            cpu->E = cpu->D;
+            break;
+        case 0x6A:  //LD L, D
+            cpu->L = cpu->D;
+            break;
+        case 0x7A:  //LD A, D
+            cpu->A = cpu->D;
+            break;
+        case 0x4B:  //LD C, E
+            cpu->C = cpu->E;
+            break;
+        case 0x5B:  //LD E, E
+            cpu->E = cpu->E;
+            break;
+        case 0x6B:  //LD L, E
+            cpu->L = cpu->E;
+            break;
+        case 0x7B:  //LD A, E
+            cpu->A = cpu->E;
+            break;
+        case 0x4C:  //LD C, H
+            cpu->C = cpu->H;
+            break;
+        case 0x5C:  //LD E, H
+            cpu->E = cpu->H;
+            break;
+        case 0x6C:  //LD L, H
+            cpu->L = cpu->H;
             break;
         case 0x7C:  //LD A, H
             cpu->A = cpu->H;
             break;
+        case 0x4D:  //LD C, L
+            cpu->C = cpu->L;
+            break;
+        case 0x5D:  //LD E, L
+            cpu->E = cpu->L;
+            break;
+        case 0x6D:  //LD L, L
+            cpu->L = cpu->L;
+            break;
         case 0x7D:  //LD A, L
             cpu->A = cpu->L;
+            break;
+        case 0x4E:  //LD C, (HL)
+            cpu->C = read_byte(cpu->HL);
+            break;
+        case 0x5E:  //LD E, (HL)
+            cpu->E = read_byte(cpu->HL);
+            break;
+        case 0x6E:  //LD L, (HL)
+            cpu->L = read_byte(cpu->HL);
+            break;
+        case 0x7E:  //LD A, (HL)
+            cpu->A = read_byte(cpu->HL);
+            break;
+        case 0x4F:  //LD C, A
+            cpu->C = cpu->A;
+            break;
+        case 0x5F:  //LD E, A
+            cpu->E = cpu->A;
+            break;
+        case 0x6F:  //LD L, A
+            cpu->L = cpu->A;
+            break;
+        case 0x7F:  //LD A, A
+            cpu->A = cpu->A;
             break;
         case 0xE0:  //LD (0xFF00 + u8), A
             target = 0xFF00 + read_byte(cpu->PC++);
             write_byte(target, cpu->A);
+            break;
+        case 0xF0:  //LD A, (0xFF00 + u8)
+            target = 0xFF00 + read_byte(cpu->PC++);
+            cpu->A = read_byte(target);
+            break;
+        case 0xE2:  //LD (0xFF00 + C), A
+            target = 0xFF00 + cpu->C;
+            write_byte(target, cpu->A);
+            break;
+        case 0xF2:  //LD A, (0xFF00 + C)
+            target = 0xFF00 + cpu->C;
+            cpu->A = read_byte(target);
+            break;
+        case 0xF9:  //LD SP, HL
+            cpu->SP = cpu->HL;
             break;
         case 0xEA:  //LD (U16), A
             low = read_byte(cpu->PC++);
             high = read_byte(cpu->PC++);
             target = (high << 8) | low;
             write_byte(target, cpu->A);
+            break;
+        case 0xFA:  //LD A, (u16)
+            low = read_byte(cpu->PC++);
+            high = read_byte(cpu->PC++);
+            target = (high << 8) | low;
+            cpu->A = read_byte(target);
             break;
 
         // ==========================================
