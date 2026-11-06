@@ -736,25 +736,40 @@ bool cpu_step(CPU *cpu) {
         // ==========================================
         // 6. STACK OPERATIONS (PUSH / POP)
         // ==========================================
+        case 0xC1:  //POP BC
+            cpu->L = read_byte(cpu->SP++);
+            cpu->H = read_byte(cpu->SP++);
+            break;
+        case 0xD1:  //POP DE
+            cpu->E = read_byte(cpu->SP++);
+            cpu->D = read_byte(cpu->SP++);
+            break;
+        case 0xE1:  //POP HL
+            cpu->L = read_byte(cpu->SP++);
+            cpu->H = read_byte(cpu->SP++);
+            break;
+        case 0xF1:  //POP AF
+            cpu->F = read_byte(cpu->SP++);
+            cpu->A = read_byte(cpu->SP++);
+            break;
+
         case 0xC5:  //PUSH BC
             cpu->SP--;
             write_byte(cpu->SP, cpu->B);
             cpu->SP--;
             write_byte(cpu->SP, cpu->C);
             break;
-        case 0xE1:  //POP HL
-            cpu->L = read_byte(cpu->SP++);
-            cpu->H = read_byte(cpu->SP++);
+        case 0xD5:  //PUSH DE
+            cpu->SP--;
+            write_byte(cpu->SP, cpu->D);
+            cpu->SP--;
+            write_byte(cpu->SP, cpu->E);
             break;
         case 0xE5:  //PUSH HL
             cpu->SP--;
             write_byte(cpu->SP, cpu->H);
             cpu->SP--;
             write_byte(cpu->SP, cpu->L);
-            break;
-        case 0xF1:  //POP AF
-            cpu->F = read_byte(cpu->SP++);
-            cpu->A = read_byte(cpu->SP++);
             break;
         case 0xF5:  //PUSH AF
             cpu->SP--;
