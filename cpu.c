@@ -850,10 +850,10 @@ bool cpu_step(CPU *cpu) {
         case 0x98:  //SBC A, B
             old_c = (cpu->F & 0x10) ? 1 : 0;
             result = cpu->A - cpu->B - old_c;
-            z_flag = (result == 0x00) ? 0x80 : 0x00;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
             h_flag = ((cpu->A & 0x0F) < ((cpu->B & 0x0F) + old_c)) ? 0x20 : 0x00;
             n_flag = 0x40;
-            c_flag = ((uint16_t) cpu->A < (uint16_t) (cpu->B + old_c)) ? 0x10 : 0x00;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)cpu->B + old_c) ? 0x10 : 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             cpu->A = result & 0xFF;
             break;
@@ -871,7 +871,282 @@ bool cpu_step(CPU *cpu) {
             c_flag = (cpu->A < cpu->B) ? 0x10 : 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             break;
-
+        case 0x89:  //ADC A, C
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->C + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->C & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x99:  //SBC A, C
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->C - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->C & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->C + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xA9:  //XOR A, C
+            cpu->A ^= cpu->C;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xB9:  //CP A, C
+            z_flag = (cpu->A == cpu->C) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->C & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->C) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x8A:  //ADC A, D
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->D + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->D & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9A:  //SBC A, D
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->D - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->D & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->D + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAA:  //XOR A, D
+            cpu->A ^= cpu->D;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBA:  //CP A, D
+            z_flag = (cpu->A == cpu->D) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->D & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->D) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x8B:  //ADC A, E
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->E + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->E & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9B:  //SBC A, E
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->E - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->E & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->E + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAB:  //XOR A, E
+            cpu->A ^= cpu->E;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBB:  //CP A, E
+            z_flag = (cpu->A == cpu->E) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->E & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->E) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x8C:  //ADC A, H
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->H + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->H & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9C:  //SBC A, H
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->H - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->H & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->H + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAC:  //XOR A, H
+            cpu->A ^= cpu->H;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBC:  //CP A, H
+            z_flag = (cpu->A == cpu->H) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->H & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->H) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x8D:  //ADC A, L
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->L + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->L & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9D:  //SBC A, L
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->L - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->L & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->L + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAD:  //XOR A, L
+            cpu->A ^= cpu->L;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBD:  //CP A, L
+            z_flag = (cpu->A == cpu->L) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->L & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->L) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x8E:  //ADC A, (HL)
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + read_byte(cpu->HL) + old_c;
+            h_flag = ((cpu->A & 0x0F) + (read_byte(cpu->HL) & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9E:  //SBC A, (HL)
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - read_byte(cpu->HL) - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((read_byte(cpu->HL) & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(read_byte(cpu->HL) + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAE:  //XOR A, (HL)
+            cpu->A ^= read_byte(cpu->HL);
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBE:  //CP A, (HL)
+            z_flag = (cpu->A == read_byte(cpu->HL)) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (read_byte(cpu->HL) & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < read_byte(cpu->HL)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xCE:  //ADC A, u8
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + read_byte(cpu->PC) + old_c;
+            h_flag = ((cpu->A & 0x0F) + (read_byte(cpu->PC) & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->PC++;
+            break;
+        case 0xDE:  //SBC A, u8
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - read_byte(cpu->PC) - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((read_byte(cpu->PC) & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(read_byte(cpu->PC) + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            cpu->PC++;
+            break;
+        case 0xEE:  //XOR A, u8
+            cpu->A ^= read_byte(cpu->PC);
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            cpu->PC++;
+            break;
+        case 0xFE:  //CP A, u8
+            z_flag = (cpu->A == read_byte(cpu->PC)) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (read_byte(cpu->PC) & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < read_byte(cpu->PC)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->PC++;
+            break;
+        case 0x8F:  //ADC A, A
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A + cpu->A + old_c;
+            h_flag = ((cpu->A & 0x0F) + (cpu->A & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            c_flag = (result > 0xFF) ? 0x10 : 0x00;
+            cpu->A = result & 0xFF;
+            z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x9F:  //SBC A, A
+            old_c = (cpu->F & 0x10) ? 1 : 0;
+            result = cpu->A - cpu->A - old_c;
+            z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((cpu->A & 0x0F) + old_c)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->A + old_c)) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            cpu->A = result & 0xFF;
+            break;
+        case 0xAF:  //XOR A, A
+            cpu->A ^= cpu->A;
+            cpu->F = 0x00;          //reset all flags
+            if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
+                cpu->F |= 0x80;
+            }
+            break;
+        case 0xBF:  //CP A, A
+            z_flag = (cpu->A == cpu->A) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (cpu->A & 0x0F)) ? 0x20 : 0x00;
+            n_flag = 0x40;
+            c_flag = (cpu->A < cpu->A) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
 
         // ==========================================
         // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE) ALL DONE
