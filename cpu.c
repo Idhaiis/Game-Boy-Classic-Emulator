@@ -523,7 +523,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 4. ARITHMETICAL & LOGICAL OPERATIONS
+        // 4. ARITHMETICAL & LOGICAL OPERATIONS DONE
         // ==========================================
 
         case 0x80:  //ADD A, B
@@ -853,7 +853,7 @@ bool cpu_step(CPU *cpu) {
             z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
             h_flag = ((cpu->A & 0x0F) < ((cpu->B & 0x0F) + old_c)) ? 0x20 : 0x00;
             n_flag = 0x40;
-            c_flag = ((uint16_t)cpu->A < (uint16_t)cpu->B + old_c) ? 0x10 : 0x00;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(cpu->B + old_c)) ? 0x10 : 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             cpu->A = result & 0xFF;
             break;
@@ -1076,42 +1076,42 @@ bool cpu_step(CPU *cpu) {
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             break;
         case 0xCE:  //ADC A, u8
+            target = read_byte(cpu->PC++);
             old_c = (cpu->F & 0x10) ? 1 : 0;
-            result = cpu->A + read_byte(cpu->PC) + old_c;
-            h_flag = ((cpu->A & 0x0F) + (read_byte(cpu->PC) & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
+            result = cpu->A + target + old_c;
+            h_flag = ((cpu->A & 0x0F) + (target & 0x0F) + old_c > 0x0F) ? 0x20 : 0x00;
             c_flag = (result > 0xFF) ? 0x10 : 0x00;
             cpu->A = result & 0xFF;
             z_flag = (cpu->A == 0x00) ? 0x80 : 0x00;
             n_flag = 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
-            cpu->PC++;
             break;
         case 0xDE:  //SBC A, u8
+            target = read_byte(cpu->PC++);
             old_c = (cpu->F & 0x10) ? 1 : 0;
-            result = cpu->A - read_byte(cpu->PC) - old_c;
+            result = cpu->A - target - old_c;
             z_flag = ((result & 0xFF) == 0x00) ? 0x80 : 0x00;
-            h_flag = ((cpu->A & 0x0F) < ((read_byte(cpu->PC) & 0x0F) + old_c)) ? 0x20 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < ((target & 0x0F) + old_c)) ? 0x20 : 0x00;
             n_flag = 0x40;
-            c_flag = ((uint16_t)cpu->A < (uint16_t)(read_byte(cpu->PC) + old_c)) ? 0x10 : 0x00;
+            c_flag = ((uint16_t)cpu->A < (uint16_t)(target + old_c)) ? 0x10 : 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             cpu->A = result & 0xFF;
-            cpu->PC++;
             break;
         case 0xEE:  //XOR A, u8
-            cpu->A ^= read_byte(cpu->PC);
+            target = read_byte(cpu->PC++);
+            cpu->A ^= target;
             cpu->F = 0x00;          //reset all flags
             if (cpu->A == 0x00) {   //if result is 0, make zero flag= 1
                 cpu->F |= 0x80;
             }
-            cpu->PC++;
             break;
         case 0xFE:  //CP A, u8
-            z_flag = (cpu->A == read_byte(cpu->PC)) ? 0x80 : 0x00;
-            h_flag = ((cpu->A & 0x0F) < (read_byte(cpu->PC) & 0x0F)) ? 0x20 : 0x00;
+            target = read_byte(cpu->PC++);
+            z_flag = (cpu->A == target) ? 0x80 : 0x00;
+            h_flag = ((cpu->A & 0x0F) < (target & 0x0F)) ? 0x20 : 0x00;
             n_flag = 0x40;
-            c_flag = (cpu->A < read_byte(cpu->PC)) ? 0x10 : 0x00;
+            c_flag = (cpu->A < target) ? 0x10 : 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
-            cpu->PC++;
             break;
         case 0x8F:  //ADC A, A
             old_c = (cpu->F & 0x10) ? 1 : 0;
@@ -1364,7 +1364,7 @@ bool cpu_step(CPU *cpu) {
             cpu->H = read_byte(cpu->SP++);
             break;
         case 0xF1:  //POP AF
-            cpu->F = read_byte(cpu->SP++);
+            cpu->F = read_byte(cpu->SP++) & 0xF0;
             cpu->A = read_byte(cpu->SP++);
             break;
 
