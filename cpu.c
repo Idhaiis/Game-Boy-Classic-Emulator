@@ -21,6 +21,7 @@ bool cpu_step(CPU *cpu) {
     uint8_t z_flag, n_flag, h_flag, c_flag;
     uint8_t old_z, old_n, old_h, old_c;
     uint16_t result ,target, return_address;
+    uint32_t bigresult;
     bool is_zero, carry;
     uint8_t cb_opcode;
 
@@ -1145,6 +1146,62 @@ bool cpu_step(CPU *cpu) {
             h_flag = ((cpu->A & 0x0F) < (cpu->A & 0x0F)) ? 0x20 : 0x00;
             n_flag = 0x40;
             c_flag = (cpu->A < cpu->A) ? 0x10 : 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0x09:  //ADD HL, BC
+            bigresult = cpu->HL + cpu->BC;
+            h_flag = ((cpu->HL & 0x0FFF) + (cpu->BC & 0x0FFF) > 0x0FFF) ? 0x20 : 0x00;
+            c_flag = (bigresult > 0xFFFF) ? 0x10 : 0x00;
+            cpu->HL += cpu->BC;
+            n_flag = 0x00;
+            old_z = cpu->F & 0x80;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
+        case 0x19:  //ADD HL, DE
+            bigresult = cpu->HL + cpu->DE;
+            h_flag = ((cpu->HL & 0x0FFF) + (cpu->DE & 0x0FFF) > 0x0FFF) ? 0x20 : 0x00;
+            c_flag = (bigresult > 0xFFFF) ? 0x10 : 0x00;
+            cpu->HL += cpu->DE;
+            n_flag = 0x00;
+            old_z = cpu->F & 0x80;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
+        case 0x29:  //ADD HL, HL
+            bigresult = cpu->HL + cpu->HL;
+            h_flag = ((cpu->HL & 0x0FFF) + (cpu->HL & 0x0FFF) > 0x0FFF) ? 0x20 : 0x00;
+            c_flag = (bigresult > 0xFFFF) ? 0x10 : 0x00;
+            cpu->HL += cpu->HL;
+            n_flag = 0x00;
+            old_z = cpu->F & 0x80;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
+        case 0x39:  //ADD HL, SP
+            bigresult = cpu->HL + cpu->SP;
+            h_flag = ((cpu->HL & 0x0FFF) + (cpu->SP & 0x0FFF) > 0x0FFF) ? 0x20 : 0x00;
+            c_flag = (bigresult > 0xFFFF) ? 0x10 : 0x00;
+            cpu->HL += cpu->SP;
+            n_flag = 0x00;
+            old_z = cpu->F & 0x80;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
+        case 0xE8:  //ADD SP, i8
+            offset = read_byte(cpu->PC++);
+            result = cpu->SP + offset;
+            h_flag = ((cpu->SP & 0x0F) + (offset & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = ((cpu->SP & 0xFF) + (offset & 0xFF) > 0xFF) ? 0x10 : 0x00;
+            cpu->SP = result;
+            z_flag = 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
+        case 0xF8:  //LD HL, SP + i8
+            offset = read_byte(cpu->PC++);
+            result = cpu->SP + offset;
+            h_flag = ((cpu->SP & 0x0F) + (offset & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = ((cpu->SP & 0xFF) + (offset & 0xFF) > 0xFF) ? 0x10 : 0x00;
+            cpu->HL = result;
+            z_flag = 0x00;
+            n_flag = 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             break;
 
