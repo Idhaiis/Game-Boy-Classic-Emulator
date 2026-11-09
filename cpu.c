@@ -359,6 +359,16 @@ bool cpu_step(CPU *cpu) {
             target = (high << 8) | low;
             cpu->A = read_byte(target);
             break;
+        case 0xF8:  //LD HL, SP + i8
+            offset = (int8_t) read_byte(cpu->PC++);
+            result = cpu->SP + offset;
+            h_flag = ((cpu->SP & 0x0F) + (offset & 0x0F) > 0x0F) ? 0x20 : 0x00;
+            c_flag = ((cpu->SP & 0xFF) + (offset & 0xFF) > 0xFF) ? 0x10 : 0x00;
+            cpu->HL = result;
+            z_flag = 0x00;
+            n_flag = 0x00;
+            cpu->F = z_flag | n_flag | h_flag | c_flag;
+            break;
 
         // ==========================================
         // 3. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS ALL DONE
@@ -1142,10 +1152,10 @@ bool cpu_step(CPU *cpu) {
             }
             break;
         case 0xBF:  //CP A, A
-            z_flag = (cpu->A == cpu->A) ? 0x80 : 0x00;
+            z_flag = 0x80;
             h_flag = ((cpu->A & 0x0F) < (cpu->A & 0x0F)) ? 0x20 : 0x00;
             n_flag = 0x40;
-            c_flag = (cpu->A < cpu->A) ? 0x10 : 0x00;
+            c_flag = 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
             break;
         case 0x09:  //ADD HL, BC
@@ -1185,21 +1195,11 @@ bool cpu_step(CPU *cpu) {
             cpu->F = old_z | n_flag | h_flag | c_flag;
             break;
         case 0xE8:  //ADD SP, i8
-            offset = read_byte(cpu->PC++);
+            offset = (int8_t) read_byte(cpu->PC++);
             result = cpu->SP + offset;
             h_flag = ((cpu->SP & 0x0F) + (offset & 0x0F) > 0x0F) ? 0x20 : 0x00;
             c_flag = ((cpu->SP & 0xFF) + (offset & 0xFF) > 0xFF) ? 0x10 : 0x00;
             cpu->SP = result;
-            z_flag = 0x00;
-            n_flag = 0x00;
-            cpu->F = z_flag | n_flag | h_flag | c_flag;
-            break;
-        case 0xF8:  //LD HL, SP + i8
-            offset = read_byte(cpu->PC++);
-            result = cpu->SP + offset;
-            h_flag = ((cpu->SP & 0x0F) + (offset & 0x0F) > 0x0F) ? 0x20 : 0x00;
-            c_flag = ((cpu->SP & 0xFF) + (offset & 0xFF) > 0xFF) ? 0x10 : 0x00;
-            cpu->HL = result;
             z_flag = 0x00;
             n_flag = 0x00;
             cpu->F = z_flag | n_flag | h_flag | c_flag;
