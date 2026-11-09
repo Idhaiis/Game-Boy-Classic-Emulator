@@ -1206,7 +1206,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE) ALL DONE
+        // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE / RST DONE) ALL DONE
         // ==========================================
         case 0x20:  //JR NZ, i8
             offset = (int8_t)read_byte(cpu->PC++);
@@ -1403,6 +1403,71 @@ bool cpu_step(CPU *cpu) {
             target = (high << 8) | low;
             cpu->PC = target;
             cpu->IME = true;
+            break;
+
+        case 0xC7:  //RST 00h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0000;
+            break;
+        case 0xD7:  //RST 10h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0010;
+            break;
+        case 0xE7:  //RST 20h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0020;
+            break;
+        case 0xF7:  //RST 30h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0030;
+            break;
+        case 0xCF:  //RST 08h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0008;
+            break;
+        case 0xDF:  //RST 18h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0018;
+            break;
+        case 0xEF:  //RST 28h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0028;
+            break;
+        case 0xFF:  //RST 38h
+            return_address = cpu->PC;
+            cpu->SP--;
+            write_byte(cpu->SP, (return_address >> 8) & 0xFF);  //writing high byte
+            cpu->SP--;
+            write_byte(cpu->SP, return_address & 0xFF);         //writing low byte
+            cpu->PC = 0x0038;
             break;
 
         // ==========================================
