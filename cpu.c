@@ -47,6 +47,23 @@ bool cpu_step(CPU *cpu) {
         case 0xFB:  //EI (Enable Interrupts)
             cpu->IME = true;
             break;
+
+        // ==========================================
+        // 2. BYTE MANIPULATION
+        // ==========================================
+        case 0x07:  //RLCA
+            c_flag = ((cpu->A & 0x80) == 0x80) ? 0x10: 0x00;
+            cpu->A <<= 1;
+            cpu->A |= (c_flag == 0x10) ? 0x01: 0x00;
+            cpu->F = c_flag;
+            break;
+        case 0x17:  //RLA
+            old_c = cpu->F & 0x10;
+            c_flag = cpu->A & 0x80;
+            cpu->A <<= 1;
+            cpu->A |= (old_c == 0x10) ? 0x01: 0x00;
+            cpu->F = (c_flag == 0x80) ? 0x10: 0x00;
+            break;
         case 0xCB:  //PREFIX CB
             cb_opcode = read_byte(cpu->PC++);
             switch (cb_opcode) {
@@ -58,7 +75,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 2. LOAD / DATA TRANSFER (LD) INSTRUCTIONS ALL DONE
+        // 3. LOAD / DATA TRANSFER (LD) INSTRUCTIONS ALL DONE
         // ==========================================
         case 0x01:  //LD BC, u16
             low = read_byte(cpu->PC++);
@@ -371,7 +388,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 3. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS ALL DONE
+        // 4. ARITHMETIC (INC DONE / DEC DONE) INSTRUCTIONS ALL DONE
         // ==========================================
         case 0x03:  //INC BC
             cpu->BC++;
@@ -534,7 +551,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 4. ARITHMETICAL & LOGICAL OPERATIONS DONE
+        // 5. ARITHMETICAL & LOGICAL OPERATIONS DONE
         // ==========================================
 
         case 0x80:  //ADD A, B
@@ -1206,7 +1223,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 5. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE / RST DONE) ALL DONE
+        // 6. JUMPS & CALLS (JR DONE / JP DONE / CALL DONE / RET DONE / RST DONE) ALL DONE
         // ==========================================
         case 0x20:  //JR NZ, i8
             offset = (int8_t)read_byte(cpu->PC++);
@@ -1471,7 +1488,7 @@ bool cpu_step(CPU *cpu) {
             break;
 
         // ==========================================
-        // 6. STACK OPERATIONS (PUSH DONE / POP DONE) ALL DONE
+        // 7. STACK OPERATIONS (PUSH DONE / POP DONE) ALL DONE
         // ==========================================
         case 0xC1:  //POP BC
             cpu->C = read_byte(cpu->SP++);
@@ -1515,10 +1532,60 @@ bool cpu_step(CPU *cpu) {
             write_byte(cpu->SP, cpu->F);
             break;
 
+        // ==========================================
+        // 8. UNCATAGORIZED DONE
+        // ==========================================
+        case 0x27:  //DAA
+            result = cpu->A;
+            c_flag = cpu->F & 0x10;
+            if ((cpu->F & 0x40) == 0x40) {
+                if ((cpu->F & 0x20) == 0x20) {
+                    result -= 0x06;
+                }
+                if ((cpu->F & 0x10) == 0x10) {
+                    result -= 0x60;
+                }
+            }
+            else {
+                if (((cpu->F & 0x20) == 0x20) || ((result & 0x0F) > 9)) {
+                    result += 0x06;
+                }
+                if (((cpu->F & 0x10) == 0x10) || cpu->A > 0x99) {
+                    c_flag = 0x10;
+                    result += 0x60;
+                }
+            }
+            z_flag = ((result & 0xFF) == 0) ? 0x80 : 0x00;
+            old_n = cpu->F & 0x40;
+            h_flag = 0x00;
+            cpu->A = result & 0xFF;
+            cpu->F = z_flag | old_n | h_flag | c_flag;
+            break;
+        case 0x37:  //SCF
+            old_z = cpu->F & 0x80;
+            n_flag = 0x00;
+            h_flag = 0x00;
+            c_flag = 0x10;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
+        case 0x2F:  //CPL
+            cpu->A = cpu->A ^ 0xFF;
+            old_z = cpu->F & 0x80;
+            old_c = cpu->F & 0x10;
+            n_flag = 0x40;
+            h_flag = 0x20;
+            cpu->F = old_z | n_flag | h_flag | old_c;
+            break;
+        case 0x3F:  //CCF
+            old_z = cpu->F & 0x80;
+            n_flag = 0x00;
+            h_flag = 0x00;
+            c_flag = (cpu->F & 0x10) ^ 0x10;
+            cpu->F = old_z | n_flag | h_flag | c_flag;
+            break;
         default:
             printf("Command doesn't exist. Opcode: 0x%02X\n", opcode);
             return 1;
     }
-
     return 0;
 }
