@@ -64,6 +64,19 @@ bool cpu_step(CPU *cpu) {
             cpu->A |= (old_c == 0x10) ? 0x01: 0x00;
             cpu->F = (c_flag == 0x80) ? 0x10: 0x00;
             break;
+        case 0x0F:  //RRCA
+            c_flag = ((cpu->A & 0x01) == 0x01) ? 0x10: 0x00;
+            cpu->A >>= 1;
+            cpu->A |= (c_flag == 0x10) ? 0x80: 0x00;
+            cpu->F = c_flag;
+            break;
+        case 0x1F:  //RRA
+            old_c = cpu->F & 0x10;
+            c_flag = cpu->A & 0x01;
+            cpu->A >>= 1;
+            cpu->A |= (old_c == 0x10) ? 0x80: 0x00;
+            cpu->F = (c_flag == 0x01) ? 0x10: 0x00;
+            break;
         case 0xCB:  //PREFIX CB
             cb_opcode = read_byte(cpu->PC++);
             switch (cb_opcode) {
