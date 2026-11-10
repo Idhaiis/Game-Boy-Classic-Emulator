@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 include_directories(.)
 
 add_executable(GBEmulator
+        cpu.c
         cpu.h
         main.c
         main.h
